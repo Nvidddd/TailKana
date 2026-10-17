@@ -1,6 +1,32 @@
 # TailKana
 
+<img src="assets/tailkana-preview.png" alt="TailKana 图标" width="88">
+
 面向中文用户的 macOS 日文输入法，基于 Fcitx5 macOS 和 Mozc，支持末尾音节纠错、简体中文释义、拼音辅助及本地 AI 上下文推荐。
+
+## 界面预览
+
+候选外观预览：假名标注、三个短候选与末尾音节十字轮盘。
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/panel-dark.png">
+  <img src="docs/images/panel-light.png" alt="TailKana 候选外观预览：三个带假名的候选，右侧为末尾音节十字轮盘" width="760">
+</picture>
+
+<details>
+<summary>查看外观、输入和 AI 设置界面</summary>
+
+外观设置：明暗主题、毛玻璃开关、自定义颜色和底色浓度。
+
+![TailKana 外观设置示例](docs/images/appearance-light.png)
+
+输入设置：默认输入方式、实时假名、AI 预测长度和参考上下文长度。
+
+![TailKana 输入与 AI 设置示例](docs/images/settings-light.png)
+
+</details>
+
+图片由当前原生设置及其内置候选预览组件渲染，使用演示配置；为方便阅读，示例关闭毛玻璃，不包含个人输入或设置。
 
 ## 下载与安装
 
