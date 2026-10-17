@@ -1,0 +1,5 @@
+[
+  {"file":"zenz.gguf","repo":"Miwa-Keita/zenz-v3-small-gguf","revision":"d48369e21adb9f49903eb7c54be1a1d9723eb805","source":"ggml-model-Q5_K_M.gguf","bytes":72298816,"sha256":"501f605d088f5b988791a00ae19ed46985ed7c48144f364b2f3f1f951c9b2083","license":"CC-BY-SA-4.0"},
+  {"file":"e5.onnx","repo":"Xenova/multilingual-e5-small","revision":"761b726dd34fb83930e26aab4e9ac3899aa1fa78","source":"onnx/model_quantized.onnx","bytes":118308185,"sha256":"f80102d3f2a1229f387d3c81909990d8945513e347b0eab049f7de3c6f98c193","license":"MIT"},
+  {"file":"tokenizer.json","repo":"Xenova/multilingual-e5-small","revision":"761b726dd34fb83930e26aab4e9ac3899aa1fa78","source":"tokenizer.json","bytes":17082730,"sha256":"0b44a9d7b51c3c62626640cda0e2c2f70fdacdc25bbbd68038369d14ebdf4c39","license":"MIT"}
+]

@@ -1,0 +1,11 @@
+// Adapted from azooKey, MIT; see third_party/azookey-typo/.
+{"bs","ba"},
+{"no","bo"},
+{"li","ki"},
+{"lo","ko"},
+{"lu","ku"},
+{"my","mu"},
+{"tp","to"},
+{"ts","ta"},
+{"wi","wo"},
+{"pu","ou"},

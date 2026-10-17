@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="ink" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#33465e"/><stop offset=".55" stop-color="#24344f"/><stop offset="1" stop-color="#18263d"/></linearGradient>
+    <linearGradient id="rim" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#ffffff" stop-opacity=".19"/><stop offset="1" stop-color="#ffffff" stop-opacity=".025"/></linearGradient>
+    <filter id="shadow" x="-.25" y="-.25" width="1.5" height="1.6"><feDropShadow dx="0" dy="14" stdDeviation="17" flood-color="#0d192a" flood-opacity=".24"/></filter>
+  </defs>
+  <rect x="64" y="64" width="896" height="896" rx="208" fill="url(#ink)" filter="url(#shadow)"/>
+  <rect x="66" y="66" width="892" height="892" rx="206" fill="none" stroke="url(#rim)" stroke-width="4"/>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M 292 386 H 700 L 665 636 Q 654 735 552 735" stroke="#f4f2e8" stroke-width="68"/>
+    <path d="M 484 269 C 478 461 417 617 288 717" stroke="#f4f2e8" stroke-width="70"/>
+    <path d="M 650 686 Q 623 735 552 735" stroke="#a5d8c8" stroke-width="68"/>
+  </g>
+</svg>

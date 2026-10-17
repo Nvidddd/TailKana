@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 3,
+  "generatorSha256": "df6c83fccd37ede77d6fa28231708eab3cbac44fb425c0168a42fafbcb74e3a4",
+  "conversion": {
+    "package": "opencc-python-reimplemented",
+    "version": "0.1.7",
+    "sha256": "41b3b92943c7bed291f448e9c7fad4b577c8c2eae30fcfe5a74edf8818493aa6",
+    "profile": "t2s",
+    "fields": [
+      "meaning"
+    ]
+  },
+  "meaningLanguage": "zh-Hans",
+  "sources": [
+    "https://kaikki.org/zhwiktionary/日語/index.html",
+    "https://kaikki.org/zhwiktionary/日语/index.html"
+  ],
+  "dumpSha256": {
+    "ja-zh.jsonl": "9fda6812bf0e81cf24462e9ce1d9b8e7f3233ef6e5df7c52a65be2b84107fa22",
+    "ja-zh-simplified.jsonl": "04e00631a18a97014744e0304cd9d857e9de4e0475dce37893f3b0bba93b092d"
+  },
+  "entries": 142981,
+  "words": 112173,
+  "surfaceForms": 410429,
+  "license": "CC-BY-SA-4.0; Chinese Wiktionary contributors; each source links to its word page",
+  "changes": "Merged Chinese-edition Japanese extracts; Chinese meanings converted to Simplified Chinese with OpenCC t2s; Japanese word forms/readings/source links preserved; definitions deduplicated.",
+  "bytes": 36220928
+}

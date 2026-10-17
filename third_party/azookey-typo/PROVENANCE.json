@@ -1,0 +1,8 @@
+{
+  "repository": "https://github.com/azooKey/AzooKeyKanaKanjiConverter",
+  "commit": "d59a28e4c7ca049aef04f29a91eae9677a7753f2",
+  "source": "Sources/KanaKanjiConverterModule/DictionaryManagement/TypoCorrection.swift",
+  "sha256": "6baf43cdbd238db37897a2b5901d4f5745fe06f44cdda65c37c64997e36a3442",
+  "license": "MIT",
+  "adaptation": "Roman confusion pairs and cost 3.5; bounded C++ variant search capped at 8 alternatives / 3 edits. Existing Mozc dictionary validates and supplies candidates."
+}

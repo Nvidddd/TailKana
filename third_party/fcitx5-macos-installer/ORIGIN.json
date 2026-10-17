@@ -1,0 +1,12 @@
+{
+  "repository": "https://github.com/fcitx-contrib/fcitx5-macos-installer",
+  "commit": "a825d02734dac3a9abde874f9dd5164abe63c65d",
+  "files": [
+    "im/register_im.swift",
+    "im/enable_im.swift"
+  ],
+  "changes": [
+    "bundle identifier and installed bundle path only"
+  ],
+  "license": "GPL-3.0"
+}

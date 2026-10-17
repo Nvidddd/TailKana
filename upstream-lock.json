@@ -1,0 +1,87 @@
+{
+  "fcitx5-macos": {
+    "path": "work/fcitx5-macos",
+    "commit": "a5cb40f52fde1e6ba2ac94cdc3c663026c59cad2",
+    "url": "https://github.com/fcitx/fcitx5-macos.git"
+  },
+  "fcitx5-mozc": {
+    "path": "work/fcitx5-mozc",
+    "commit": "9d425ac76d01975159ddaf0dfbe732d9ba644abe",
+    "url": "https://github.com/fcitx-contrib/fcitx5-mozc.git"
+  },
+  "fcitx5": {
+    "path": "work/fcitx5-macos/fcitx5",
+    "commit": "f4eb74cc467c29710024c8f14f535ab8bde2e605",
+    "url": "https://github.com/fcitx/fcitx5"
+  },
+  "webview": {
+    "path": "work/fcitx5-macos/fcitx5-webview",
+    "commit": "c509e24c1c87e96edd215b67f3993f000ecf8c31",
+    "url": "https://github.com/fcitx-contrib/fcitx5-webview"
+  },
+  "mozc": {
+    "path": "work/fcitx5-mozc/mozc",
+    "commit": "18e76511af9371a9a4409b1d13c3e30884b53e9c",
+    "url": "https://github.com/google/mozc"
+  },
+  "protobuf": {
+    "path": "work/fcitx5-mozc/protobuf",
+    "commit": "4b0c3aacf0657fbf38253b38918d3358dd4319ec",
+    "url": "https://github.com/protocolbuffers/protobuf"
+  },
+  "abseil": {
+    "path": "work/fcitx5-mozc/abseil-cpp",
+    "commit": "255c84dadd029fd8ad25c5efb5933e47beaa00c7",
+    "url": "https://github.com/abseil/abseil-cpp"
+  },
+  "mozc_data": {
+    "url": "https://github.com/fcitx-contrib/fcitx5-mozc/releases/download/latest/mozc_data.inc",
+    "sha256": "3a64ffe52a6c6f5ebc14a3a72d7c4c9c6d5b44b032279dbfdf67f9a42c9cb45a"
+  },
+  "libime": {
+    "path": "work/libime",
+    "commit": "171edcf137001e8eb8274f53ec010058cda70b09",
+    "url": "https://github.com/fcitx/libime.git"
+  },
+  "language_data": {
+    "lm_sc.arpa-20260629.tar.zst": {
+      "url": "https://download.fcitx-im.org/data/lm_sc.arpa-20260629.tar.zst",
+      "sha256": "06808333b9173e5374cf2cb5afc12d08f5625bf9abb536489cac376fc05f2e7f"
+    },
+    "dict-20260907.tar.zst": {
+      "url": "https://download.fcitx-im.org/data/dict-20260907.tar.zst",
+      "sha256": "fb75a179065e690dfc4559ce1807cbaf4fbe4f0111a5005615be9f435e6b9d76"
+    },
+    "ja-zh.jsonl": {
+      "url": "https://kaikki.org/zhwiktionary/%E6%97%A5%E8%AA%9E/kaikki.org-dictionary-%E6%97%A5%E8%AA%9E.jsonl",
+      "sha256": "9fda6812bf0e81cf24462e9ce1d9b8e7f3233ef6e5df7c52a65be2b84107fa22"
+    },
+    "ja-zh-simplified.jsonl": {
+      "url": "https://kaikki.org/zhwiktionary/%E6%97%A5%E8%AF%AD/kaikki.org-dictionary-%E6%97%A5%E8%AF%AD.jsonl",
+      "sha256": "04e00631a18a97014744e0304cd9d857e9de4e0475dce37893f3b0bba93b092d"
+    }
+  },
+  "build_tools": {
+    "opencc": {
+      "package": "opencc-python-reimplemented",
+      "version": "0.1.7",
+      "filename": "opencc_python_reimplemented-0.1.7-py2.py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/30/6b/055b7806f320cc8f2cdf23c5f70221c0dc1683fca9ffaf76dfc2ad4b91b6/opencc_python_reimplemented-0.1.7-py2.py3-none-any.whl",
+      "sha256": "41b3b92943c7bed291f448e9c7fad4b577c8c2eae30fcfe5a74edf8818493aa6",
+      "purpose": "Build-time conversion of Chinese dictionary meanings only; not shipped as a runtime dependency"
+    }
+  },
+  "azookey_typo": {
+    "repository": "https://github.com/azooKey/AzooKeyKanaKanjiConverter",
+    "commit": "d59a28e4c7ca049aef04f29a91eae9677a7753f2",
+    "source": "Sources/KanaKanjiConverterModule/DictionaryManagement/TypoCorrection.swift",
+    "sha256": "6baf43cdbd238db37897a2b5901d4f5745fe06f44cdda65c37c64997e36a3442",
+    "license": "MIT",
+    "adaptation": "Roman confusion pairs and cost 3.5; bounded C++ variant search capped at 8 alternatives / 3 edits. Existing Mozc dictionary validates and supplies candidates."
+  },
+  "llama.cpp": {
+    "path": "work/ai-experiment/llama.cpp",
+    "commit": "88b97a47dc7f5892e2d5a6856fbe9cfe237f9e5c",
+    "url": "https://github.com/azooKey/llama.cpp.git"
+  }
+}

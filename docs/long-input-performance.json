@@ -1,0 +1,211 @@
+{
+  "version": "0.4.3",
+  "scope": "Native keyEvent handler, not end-to-end IMK/WebKit latency",
+  "method": "Same machine; sequential runs; real engine; AI disabled; three phrases; second pass recorded; corrections, Chinese candidate and meaning enabled in user profile",
+  "ranges": [
+    {
+      "profile": "plain",
+      "lengthMin": 1,
+      "lengthMax": 8,
+      "before": {
+        "samples": 24,
+        "medianMs": 6.590479,
+        "p95Ms": 16.28625,
+        "maxMs": 19.618875
+      },
+      "after": {
+        "samples": 24,
+        "medianMs": 2.232771,
+        "p95Ms": 4.307666,
+        "maxMs": 4.509125
+      }
+    },
+    {
+      "profile": "plain",
+      "lengthMin": 9,
+      "lengthMax": 16,
+      "before": {
+        "samples": 24,
+        "medianMs": 36.911520499999995,
+        "p95Ms": 63.001417,
+        "maxMs": 69.567541
+      },
+      "after": {
+        "samples": 24,
+        "medianMs": 6.117875,
+        "p95Ms": 8.70175,
+        "maxMs": 9.536208
+      }
+    },
+    {
+      "profile": "plain",
+      "lengthMin": 17,
+      "lengthMax": 32,
+      "before": {
+        "samples": 48,
+        "medianMs": 108.85135399999999,
+        "p95Ms": 190.219625,
+        "maxMs": 239.392166
+      },
+      "after": {
+        "samples": 48,
+        "medianMs": 10.021583499999998,
+        "p95Ms": 15.489708,
+        "maxMs": 16.441791
+      }
+    },
+    {
+      "profile": "plain",
+      "lengthMin": 33,
+      "lengthMax": 99,
+      "before": {
+        "samples": 18,
+        "medianMs": 304.511562,
+        "p95Ms": 406.219583,
+        "maxMs": 416.549916
+      },
+      "after": {
+        "samples": 18,
+        "medianMs": 17.456395999999998,
+        "p95Ms": 22.648416,
+        "maxMs": 22.907084
+      }
+    },
+    {
+      "profile": "corrections",
+      "lengthMin": 1,
+      "lengthMax": 8,
+      "before": {
+        "samples": 24,
+        "medianMs": 7.6843755,
+        "p95Ms": 27.196084,
+        "maxMs": 77.63125
+      },
+      "after": {
+        "samples": 24,
+        "medianMs": 3.624167,
+        "p95Ms": 8.801916,
+        "maxMs": 20.3835
+      }
+    },
+    {
+      "profile": "corrections",
+      "lengthMin": 9,
+      "lengthMax": 16,
+      "before": {
+        "samples": 24,
+        "medianMs": 61.5545625,
+        "p95Ms": 177.462083,
+        "maxMs": 201.434542
+      },
+      "after": {
+        "samples": 24,
+        "medianMs": 9.4172495,
+        "p95Ms": 27.299625,
+        "maxMs": 39.270584
+      }
+    },
+    {
+      "profile": "corrections",
+      "lengthMin": 17,
+      "lengthMax": 32,
+      "before": {
+        "samples": 48,
+        "medianMs": 247.8138335,
+        "p95Ms": 526.224167,
+        "maxMs": 697.53025
+      },
+      "after": {
+        "samples": 48,
+        "medianMs": 26.866062,
+        "p95Ms": 53.715875,
+        "maxMs": 62.634167
+      }
+    },
+    {
+      "profile": "corrections",
+      "lengthMin": 33,
+      "lengthMax": 99,
+      "before": {
+        "samples": 18,
+        "medianMs": 628.090854,
+        "p95Ms": 844.408958,
+        "maxMs": 877.923792
+      },
+      "after": {
+        "samples": 18,
+        "medianMs": 43.006792000000004,
+        "p95Ms": 62.580125,
+        "maxMs": 68.261208
+      }
+    },
+    {
+      "profile": "user",
+      "lengthMin": 1,
+      "lengthMax": 8,
+      "before": {
+        "samples": 24,
+        "medianMs": 13.806042000000001,
+        "p95Ms": 29.208667,
+        "maxMs": 90.188875
+      },
+      "after": {
+        "samples": 24,
+        "medianMs": 7.7807505,
+        "p95Ms": 13.558292,
+        "maxMs": 32.26875
+      }
+    },
+    {
+      "profile": "user",
+      "lengthMin": 9,
+      "lengthMax": 16,
+      "before": {
+        "samples": 24,
+        "medianMs": 64.935625,
+        "p95Ms": 184.669125,
+        "maxMs": 199.502375
+      },
+      "after": {
+        "samples": 24,
+        "medianMs": 13.877646,
+        "p95Ms": 29.398667,
+        "maxMs": 44.422417
+      }
+    },
+    {
+      "profile": "user",
+      "lengthMin": 17,
+      "lengthMax": 32,
+      "before": {
+        "samples": 48,
+        "medianMs": 251.230771,
+        "p95Ms": 517.066166,
+        "maxMs": 653.634708
+      },
+      "after": {
+        "samples": 48,
+        "medianMs": 27.6506875,
+        "p95Ms": 62.588416,
+        "maxMs": 70.297417
+      }
+    },
+    {
+      "profile": "user",
+      "lengthMin": 33,
+      "lengthMax": 99,
+      "before": {
+        "samples": 18,
+        "medianMs": 745.5425625,
+        "p95Ms": 1004.891166,
+        "maxMs": 1020.392375
+      },
+      "after": {
+        "samples": 18,
+        "medianMs": 42.2548965,
+        "p95Ms": 56.101625,
+        "maxMs": 75.983792
+      }
+    }
+  ]
+}

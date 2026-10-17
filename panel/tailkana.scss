@@ -1,0 +1,122 @@
+// Theme variables live on the entire panel, including its native-style frame.
+#fcitx-theme.tailkana-themed {
+  --tk-background: rgba(247, 248, 247, var(--tk-opacity, .2));
+  --tk-ink: #1d3d2f;
+  --tk-muted: #526b61;
+  --tk-line: #c5d6c9;
+  --tk-border: #b7cbbd;
+  --tk-highlight: #dceee2;
+  --tk-focus: #387954;
+  --tk-shadow: 0 8px 22px #163d2726, 0 2px 6px #163d2714;
+  &[data-tailkana-scheme='dark'] {
+    --tk-background: rgba(28, 28, 28, var(--tk-opacity, .2));
+    --tk-ink: #e6f2e9;
+    --tk-muted: #b4cebf;
+    --tk-line: #405a4b;
+    --tk-border: #4c6859;
+    --tk-highlight: #355b47;
+    --tk-focus: #9ecfb3;
+    --tk-shadow: 0 8px 22px #00000050, 0 2px 6px #00000030;
+  }
+  .fcitx-panel {
+    background: transparent !important;
+    border: 1px solid var(--tk-border) !important;
+    border-radius: 12px !important;
+    box-shadow: var(--tk-shadow) !important;
+  }
+  .tailkana-active {
+    background: var(--tk-background) !important;
+    // The actual desktop blur is supplied by NSVisualEffectView below WKWebView.
+    // A CSS backdrop filter cannot sample other application windows.
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+}
+// SPDX-License-Identifier: GPL-3.0-or-later
+.tailkana { display: none; }
+.tailkana-active {
+  padding: 0 !important;
+  > .fcitx-header, > .fcitx-aux-down, > .fcitx-hoverables { display: none !important; }
+  .tailkana {
+    display: flex;
+    box-sizing: border-box;
+    width: 520px;
+    align-items: stretch;
+    gap: 6px;
+    padding: 5px;
+    color: var(--tk-ink);
+    font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+    font-size: 15px;
+    line-height: 1.4;
+    text-align: left;
+    writing-mode: horizontal-tb;
+    button {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      color: inherit;
+      font: inherit;
+      cursor: pointer;
+      padding: 0;
+      &:hover:not(:disabled) { background: var(--tk-highlight); }
+      &:disabled { cursor: default; opacity: .5; }
+      &:focus-visible { outline: 2px solid var(--tk-focus); outline-offset: -2px; }
+    }
+  }
+}
+.tailkana-main { position: relative; flex: 1 1 auto; min-width: 0; width: 0; display: flex; flex-direction: column; }
+.tailkana-active button.tailkana-mode { grid-area: 3 / 1; font-size: 8px; color: var(--tk-muted); border-radius: 4px; margin: 6px 1px; white-space: nowrap; }
+.tailkana-active button.tailkana-script { grid-area: 3 / 3; font-size: 15px; border-radius: 4px; margin: 3px; }
+.tailkana-active button.tailkana-script[aria-pressed='true'] { background: var(--tk-highlight); }
+.tailkana-short, .tailkana-compact-probe { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)) 26px; min-height: 48px; flex: 0; gap: 3px; }
+.tailkana-active button.tailkana-candidate { display: flex; flex-wrap: nowrap; align-content: center; align-items: center; gap: 2px 5px; padding: 4px 3px; text-align: left; border-radius: 7px; overflow: hidden; overflow-wrap: anywhere; }
+.tailkana-number { flex-shrink: 0; font-size: 10px; color: var(--tk-muted); font-variant-numeric: tabular-nums; }
+.tailkana-index { flex: 0 0 12px; width: 12px; display: inline-flex; flex-direction: column; align-items: center; align-self: center; gap: 2px; line-height: 1; }
+.tailkana-word { font-size: 20px; line-height: 1.1; min-width: 0; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+ruby.tailkana-word { display: inline-flex; flex-direction: column; align-items: center; }
+.tailkana-base { display: block; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tailkana-furigana { display: block; order: -1; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 10px; line-height: 1; color: var(--tk-muted); font-weight: 400; }
+.tailkana-comment { flex-basis: 100%; font-size: 10px; color: var(--tk-muted); }
+.tailkana-active button.tailkana-selected { background: var(--tk-highlight); }
+.tailkana-active button.tailkana-expand { font-size: 22px; color: var(--tk-muted); }
+.tailkana-hints { display: flex; justify-content: space-between; border-top: 1px solid var(--tk-line); margin-top: auto; padding: 2px 4px 0; gap: 6px; color: var(--tk-muted); font-size: 10px; }
+.tailkana-active button.tailkana-hint { font-size: 9px; color: var(--tk-muted); border-radius: 4px; padding: 2px; }
+.tailkana-active button.tailkana-swap { font-size: 14px; color: var(--tk-muted); padding: 0 4px; border-radius: 4px; }
+.tailkana-more { position: relative; max-height: 260px; overflow-y: auto; }
+.tailkana-active button.tailkana-more-candidate {
+  box-sizing: border-box;
+  display: flex; gap: 9px; padding: 6px; width: 100%; align-items: baseline; text-align: left; border-radius: 7px; margin: 2px 0;
+  .tailkana-word, .tailkana-base, .tailkana-furigana { white-space: normal; overflow: visible; overflow-wrap: anywhere; text-overflow: clip; }
+  .tailkana-word { line-height: 1.35; }
+  ruby.tailkana-word { align-items: flex-start; }
+}
+.tailkana-hints button.tailkana-expand { font-size: 16px; padding: 0 3px; border-radius: 4px; }
+.tailkana-cross { flex-shrink: 0; align-self: flex-start; width: 126px; display: grid; grid-template-columns: repeat(3,42px); grid-template-rows: repeat(3,28px); border-left: 1px solid var(--tk-line); }
+.tailkana-count { grid-area: 1 / 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--tk-muted); gap: 3px; strong { font-size: 13px; font-weight: 400; color: var(--tk-ink); } span { font-size: 9px; } }
+.tailkana-active button.tailkana-branch { border-radius: 7px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
+.tailkana-up { grid-area: 1 / 2; }
+.tailkana-left { grid-area: 2 / 1; }
+.tailkana-right { grid-area: 2 / 3; }
+.tailkana-down { grid-area: 3 / 2; }
+.tailkana-current { grid-area: 2 / 2; background: var(--tk-highlight); display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 8px; }
+.tailkana-kana { font-size: 13px; line-height: 1.05; }
+.tailkana-roman { font-size: 7.5px; line-height: 1.1; color: var(--tk-muted); }
+.tailkana-caption { font-size: 5.5px; line-height: 1; color: var(--tk-muted); margin-bottom: .5px; }
+.tailkana-cross-key { grid-area: 1 / 3; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 7px; line-height: 1.15; color: var(--tk-muted); }
+
+.tailkana-active button.tailkana-settings { border-radius: 4px; font-size: 12px; padding: 0 3px; color: var(--tk-muted); }
+
+.tailkana-active button.tailkana-meaning-switch { font-size: 9px; border-radius: 3px; padding: 1px 3px; }
+.tailkana-gloss { flex-shrink: 0; box-sizing: border-box; width: 126px; height: 84px; display: flex; flex-direction: column; border-left: 1px solid var(--tk-line); padding: 0 4px 0 7px; gap: 3px; }
+.tailkana-gloss-header { display: flex; align-items: center; justify-content: space-between; gap: 3px; strong { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } }
+.tailkana-active button.tailkana-gloss-back { font-size: 9px; padding: 1px 3px; border-radius: 3px; flex-shrink: 0; color: var(--tk-muted); }
+.tailkana-gloss-text { font-size: 11px; line-height: 1.35; overflow: auto; flex: 1; overflow-wrap: anywhere; }
+.tailkana-active button.tailkana-gloss-source { align-self: flex-start; font-size: 8px; color: var(--tk-muted); border-radius: 3px; }
+.tailkana-chinese-badge, .tailkana-correction-badge { font-size: 8px; color: var(--tk-muted); line-height: 1; }
+
+.tailkana-active button.tailkana-ai { display:flex; align-items:center; gap:6px; width:100%; min-height:22px; margin:2px 0; padding:2px 5px; border-radius:5px; font-size:12px; text-align:left; }
+.tailkana-ai-label { color:var(--tk-focus); font-size:9px; flex-shrink:0; }
+.tailkana-ai-text { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
+.tailkana-ai-shortcut { margin-left:auto; flex-shrink:0; color:var(--tk-muted); font-size:9px; }
+
+.tailkana-compact-probe { position:absolute; top:0; left:0; width:100%; height:0; overflow:hidden; visibility:hidden; pointer-events:none; }

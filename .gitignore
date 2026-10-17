@@ -1,0 +1,9 @@
+work/
+outputs/
+.DS_Store
+__pycache__/
+*.pyc
+# Rebuilt from the hash-pinned language sources during bootstrap.
+assets/language/*.dict
+assets/language/*.lm
+assets/language/*.sqlite

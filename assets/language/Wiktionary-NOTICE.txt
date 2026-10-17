@@ -1,0 +1,5 @@
+Japanese→Chinese definitions: Chinese Wiktionary contributors, extracted by Wiktextract / Kaikki.org.
+Sources: https://kaikki.org/zhwiktionary/日語/index.html and https://kaikki.org/zhwiktionary/日语/index.html
+Word-level attribution: https://zh.wiktionary.org/wiki/<source word>#日語, accessible through the candidate panel.
+CC-BY-SA-4.0: https://creativecommons.org/licenses/by-sa/4.0/
+Modified: Chinese meanings converted to Simplified Chinese (OpenCC t2s); merged, normalized and indexed lexical/inflected word forms, definitions deduplicated; examples and media omitted. Derived glossary remains CC-BY-SA-4.0.
