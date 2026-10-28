@@ -15,6 +15,7 @@ public:
     bool Finish(TipTextService*,ITfContext*,bool cancel);
     bool CandidateAction(TipTextService*,ITfContext*,int candidate,bool submit);
     bool Render(TipTextService*,ITfContext*,const commands::RendererCommand&);
+    bool HasComposition() const;
     static void HideAll();
     static void ApplyDefaultMode(TipTextService*);
 private:

@@ -116,7 +116,7 @@ public:
     }
     bool process(TipTextService* service,ITfContext* context,bool test,bool open,commands::CompositionMode mode,bool down,WPARAM key,LPARAM lparam,const BYTE* states,BOOL* eaten) {
         if (sensitive(service) || nativeComposition_ || (open && mode!=commands::HIRAGANA && mode!=commands::FULL_KATAKANA)) return false;
-        if (mode!=lastPublishedMode_) session_.options.katakana=mode==commands::FULL_KATAKANA;
+        if (open && mode!=lastPublishedMode_) session_.options.katakana=mode==commands::FULL_KATAKANA;
         session_.options.japanese=open;
         const bool shortcut=(states[VK_CONTROL]&0x80) || (states[VK_MENU]&0x80) || (states[VK_LWIN]&0x80) || (states[VK_RWIN]&0x80);
         const auto input=shortcut ? std::optional<tk::Stroke>{}:stroke(key,lparam,states,down);
@@ -211,6 +211,7 @@ TailKanaWindows::TailKanaWindows(client::ClientInterface* client) : impl_(new Im
 TailKanaWindows::~TailKanaWindows() {impl_->hide();Impl::remove(impl_.get());}
 bool TailKanaWindows::ProcessKey(TipTextService* service,ITfContext* context,bool test,bool open,commands::CompositionMode mode,bool down,WPARAM key,LPARAM lparam,const BYTE* states,BOOL* eaten) {return impl_->process(service,context,test,open,mode,down,key,lparam,states,eaten);}
 bool TailKanaWindows::Finish(TipTextService* service,ITfContext* context,bool cancel) {return impl_->finish(service,context,cancel);}
+bool TailKanaWindows::HasComposition() const {return impl_->session_.active() || impl_->nativeComposition_;}
 bool TailKanaWindows::CandidateAction(TipTextService* service,ITfContext* context,int candidate,bool submit) {return impl_->candidate(service,context,candidate,submit);}
 bool TailKanaWindows::Render(TipTextService* service,ITfContext* context,const commands::RendererCommand& command) {return impl_->render(service,context,command);}
 void TailKanaWindows::HideAll() {
@@ -228,9 +229,11 @@ public:
         std::vector<InputScope> scopes;wil::com_ptr_nothrow<ITfRange> selection;TfActiveSelEnd end=TF_AE_NONE;
         if (!focused(service_.get(),context_.get(),false) || TipStatus::IsDisabledContext(context_.get())) return S_OK;
         if (FAILED(TipRangeUtil::GetDefaultSelection(context_.get(),cookie,&selection,&end)) || !selection || FAILED(TipRangeUtil::GetInputScopes(selection.get(),cookie,&scopes))) return S_OK;
+        auto* state=service_->GetPrivateContext(context_.get());
+        if (!state || state->GetTailKana()->HasComposition()) return S_OK;
         // Respect application-specific scopes, including password/PIN fields.
         if (std::any_of(scopes.begin(),scopes.end(),[](InputScope scope) {return scope!=IS_DEFAULT;})) return S_OK;
-        TipEditSession::SwitchInputModeAsync(service_.get(),setting(L"DefaultJapanese",1) ? commands::HIRAGANA:commands::DIRECT);
+        TipEditSession::SwitchInputModeAsync(service_.get(),setting(L"DefaultJapanese",1) ? (setting(L"Katakana",0) ? commands::FULL_KATAKANA:commands::HIRAGANA):commands::DIRECT);
         return S_OK;
     }
 private:

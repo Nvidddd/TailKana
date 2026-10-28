@@ -72,7 +72,8 @@ void UpdateCommand(TipTextService* text_service, ITfContext* context,''')
     # Two-space indentation identifies the synchronous updater, without changing
     # the empty-document hide path (which must never dereference a null context).
     patch(ui,'    Win32RendererClient::OnUpdated(command);\n  }\n  return true;','    DeliverTailKana(text_service,context,command);\n  }\n  return true;')
-    patch(ui,'  OnFocusChange(text_service, document.get());\n}', '  OnFocusChange(text_service, document.get());\n  TailKanaWindows::ApplyDefaultMode(text_service);\n}')
+    transform(ui,lambda s:s.replace('  OnFocusChange(text_service, document.get());\n  TailKanaWindows::ApplyDefaultMode(text_service);\n}', '  OnFocusChange(text_service, document.get());\n}'))
+    patch(ui,'  UpdateUiEditSessionImpl::BeginRequest(text_service, context.get());\n}', '  TailKanaWindows::ApplyDefaultMode(text_service);\n  UpdateUiEditSessionImpl::BeginRequest(text_service, context.get());\n}')
     patch(ui,'void TipUiHandlerConventional::OnDeactivate() {','void TipUiHandlerConventional::OnDeactivate() {\n  TailKanaWindows::HideAll();')
     patch(ui,'    TipTextService* text_service, ITfDocumentMgr* focused_document_manager) {','    TipTextService* text_service, ITfDocumentMgr* focused_document_manager) {\n  TailKanaWindows::HideAll();')
     es = 'win32/tip/tip_edit_session.cc'

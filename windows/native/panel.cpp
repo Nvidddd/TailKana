@@ -140,10 +140,11 @@ void Panel::paint() {
         }
         if (s.candidates.empty()) text(wide(s.error.empty() ? s.preedit:s.error),rect(12,12,left-18,50),12,muted);
         const int bottom = height_-26;fill(rect(8,bottom-2,left-8,1),line);
-        button(-1,s.expanded ? L"Tab 收起":L"Tab 展开",rect(8,bottom,60,22),9);
-        button(-4,s.options.swapKeys ? L"Enter 变换":L"空格 变换",rect(72,bottom,70,22),9);
-        button(-5,s.options.swapKeys ? L"空格 确定":L"Enter 确定",rect(146,bottom,70,22),9);
-        button(-3,L"⇄",rect(left-52,bottom,24,22),14);button(-10,L"⚙",rect(left-27,bottom,22,22),12);
+        const int hintWidth=(left-55)/3;
+        button(-1,s.expanded ? L"Tab 收起":L"Tab 展开",rect(8,bottom,hintWidth,22),9);
+        button(-4,s.options.swapKeys ? L"Enter 变换":L"空格 变换",rect(8+hintWidth,bottom,hintWidth,22),9);
+        button(-5,s.options.swapKeys ? L"空格 确定":L"Enter 确定",rect(8+2*hintWidth,bottom,hintWidth,22),9);
+        button(-3,L"⇄",rect(left-47,bottom,22,22),14);button(-10,L"⚙",rect(left-24,bottom,22,22),12);
         fill(rect(left+4,7,1,84),line);
         const auto cross = s.buffer.cross();const int x = left+9;
         auto kana = [&](const std::string& raw) {auto value=wide(raw);if (s.katakana()) for (auto& c:value) if (c>=0x3041 && c<=0x3096) c+=0x60;return value;};

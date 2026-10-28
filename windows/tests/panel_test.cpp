@@ -15,15 +15,15 @@ struct Fake final : Converter {
 int main() {
     Session session([] {return std::make_shared<Fake>();});session.options.fuzzy=session.options.corrections=false;
     session.handle({Key::Character,'t'});session.handle({Key::Character,'i'});
-    int calls=0;HWND window=nullptr;const HWND before=GetForegroundWindow();
+    int calls=0,lastAction=-1;HWND window=nullptr;const HWND before=GetForegroundWindow();
     {
-        Panel panel([&](int id,uint64_t revision) {check(id==0 && revision==session.revision(),"click mapping");++calls;});
+        Panel panel([&](int id,uint64_t revision) {check(revision==session.revision(),"click revision");lastAction=id;++calls;});
         window=panel.window();check(IsWindow(window),"candidate HWND created");panel.update(session,{120,120,130,145});UpdateWindow(window);
         check(GetForegroundWindow()==before,"candidate window must not activate");
         check((GetWindowLongPtrW(window,GWL_EXSTYLE)&WS_EX_NOACTIVATE)!=0,"NOACTIVATE style");
         check(SendMessageW(window,WM_MOUSEACTIVATE,0,0)==MA_NOACTIVATE,"mouse activation refused");
         auto click=MAKELPARAM(12,36);
-        SendMessageW(window,WM_LBUTTONDOWN,MK_LBUTTON,click);SendMessageW(window,WM_LBUTTONUP,0,click);check(calls==1,"fresh click works");
+        SendMessageW(window,WM_LBUTTONDOWN,MK_LBUTTON,click);SendMessageW(window,WM_LBUTTONUP,0,click);check(calls==1 && lastAction==0,"fresh click works");
         SendMessageW(window,WM_LBUTTONDOWN,MK_LBUTTON,click);session.handle({Key::Character,'a'});panel.update(session,{120,120,130,145});UpdateWindow(window);
         SendMessageW(window,WM_LBUTTONUP,0,click);check(calls==1,"stale click cannot commit a new candidate");
         RECT compact{};GetClientRect(window,&compact);
@@ -32,6 +32,10 @@ int main() {
         RECT area{};GetClientRect(window,&area);check(area.bottom>compact.bottom*2,"long Japanese rows wrap at full size instead of clipping to one line");
         Fake::longText=false;session.refresh();panel.update(session,{120,120,130,145});
         check(!session.expanded,"short candidates automatically recover compact view");
+        session.options.width=360;panel.update(session,{120,120,130,145});UpdateWindow(window);
+        RECT narrow{};GetClientRect(window,&narrow);const auto swap=MAKELPARAM(MulDiv(177,narrow.right,360),narrow.bottom-MulDiv(15,narrow.right,360));
+        SendMessageW(window,WM_LBUTTONDOWN,MK_LBUTTON,swap);SendMessageW(window,WM_LBUTTONUP,0,swap);
+        check(lastAction==-3,"at minimum width, Swap is clickable without Confirm overlapping it");
         panel.hide();check(!IsWindowVisible(window),"hide clears candidate window");
     }
     check(!IsWindow(window),"destruction removes native candidate window");
