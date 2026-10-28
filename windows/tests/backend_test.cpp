@@ -12,7 +12,7 @@ using namespace tailkana::windows;
 void check(bool value,const char* message) {if (!value) {std::cerr<<message<<'\n';std::exit(1);}}
 int main(int argc,char** argv) {
     mozc::InitMozc(argv[0],&argc,&argv);
-    mozc::win32::tsf::TipInputModeManager modes(false);
+    mozc::win32::tsf::TipInputModeManager modes(mozc::win32::tsf::TipInputModeManager::Config{});
     modes.OnInitialize(true,TF_CONVERSIONMODE_NATIVE|TF_CONVERSIONMODE_FULLSHAPE);
     for (const auto scope:{IS_PASSWORD,IS_NUMERIC_PASSWORD,IS_NUMERIC_PIN,IS_ALPHANUMERIC_PIN,IS_ALPHANUMERIC_PIN_SET}) {
         modes.OnChangeInputScope(std::array<InputScope,1>{scope});
