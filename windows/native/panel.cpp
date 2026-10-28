@@ -26,7 +26,7 @@ struct Font {
 int textHeight(HDC dc,const std::wstring& text,int size,int dpi,int width) {
     Font font(dc,size,dpi);RECT measure{0,0,std::max(1,width),0};
     DrawTextW(dc,text.data(),static_cast<int>(text.size()),&measure,DT_CALCRECT|DT_WORDBREAK|DT_NOPREFIX);
-    return std::max(MulDiv(size+2,dpi,96),measure.bottom);
+    return std::max<int>(MulDiv(size+2,dpi,96),measure.bottom);
 }
 int textWidth(HDC dc,const std::wstring& text,int size,int dpi) {
     Font font(dc,size,dpi);SIZE extent{};GetTextExtentPoint32W(dc,text.data(),static_cast<int>(text.size()),&extent);return extent.cx;
@@ -127,7 +127,7 @@ void Panel::paint() {
             if (s.options.furigana && item.word.reading != item.word.text && !item.word.reading.empty()) {
                 RECT reading = word;const int height=list ? textHeight(dc,wide(item.word.reading),size/2,dpi_,word.right-word.left):px(15);reading.bottom=reading.top+height;text(wide(item.word.reading),reading,size/2,muted,DT_LEFT,list);word.top += height;
             }
-            text(wide(item.word.text),word,size,ink,DT_LEFT,list);bounds.bottom=std::min(bounds.bottom,px(height_-30));if (bounds.bottom>bounds.top) hits_.push_back({bounds,static_cast<int>(index)});
+            text(wide(item.word.text),word,size,ink,DT_LEFT,list);bounds.bottom=std::min<LONG>(bounds.bottom,px(height_-30));if (bounds.bottom>bounds.top) hits_.push_back({bounds,static_cast<int>(index)});
         };
         if (s.expanded) {
             const int saved=SaveDC(dc);IntersectClipRect(dc,0,0,px(left),px(height_-30));

@@ -19,10 +19,15 @@
 #include "win32/tip/tip_private_context.h"
 #include "win32/tip/tip_text_service.h"
 #include "win32/tip/tip_status.h"
+#include "win32/tip/tip_dll_module.h"
+#include "win32/tip/tip_range_util.h"
+#include "win32/tip/tip_thread_context.h"
+#include "win32/tip/tip_input_mode_manager.h"
 namespace mozc::win32::tsf {
 namespace tk = ::tailkana::windows;
 namespace {
 constexpr uint64_t OutputMarker = 0x5441494c4b414e41ULL;
+class ModuleLifetime final : public TipComImplements<IUnknown> {};
 constexpr int CandidateStart = 500000000;
 constexpr int CandidateEnd = CandidateStart+4096*100000;
 std::atomic<uint32_t> candidateSequence{0};
@@ -49,8 +54,10 @@ std::optional<tk::Stroke> stroke(WPARAM key,LPARAM lparam,const BYTE* states,boo
     }
     return result;
 }
-bool focused(TipTextService* service,ITfContext* context) {
-    BOOL active=FALSE;if (FAILED(service->GetThreadManager()->IsThreadFocus(&active)) || !active) return false;
+bool sensitive(TipTextService* service) {auto* thread=service->GetThreadContext();return !thread || !thread->GetInputModeManager() || thread->GetInputModeManager()->TailKanaSensitiveInput();}
+bool focused(TipTextService* service,ITfContext* context,bool requireThreadFocus=true) {
+    if (!service->GetThreadManager()) return false;
+    BOOL active=FALSE;if (requireThreadFocus && (FAILED(service->GetThreadManager()->IsThreadFocus(&active)) || !active)) return false;
     wil::com_ptr_nothrow<ITfDocumentMgr> current,owner;
     return SUCCEEDED(service->GetThreadManager()->GetFocus(&current)) && current && SUCCEEDED(context->GetDocumentMgr(&owner)) && current.get()==owner.get();
 }
@@ -74,7 +81,15 @@ public:
         std::weak_ptr<Impl> weak=shared_from_this();panel_=std::make_unique<tk::Panel>([weak](int action,uint64_t revision) { if (auto self=weak.lock()) self->action(action,revision); });
         instances().push_back(weak);
     }
-    static std::vector<std::weak_ptr<Impl>>& instances() {static thread_local std::vector<std::weak_ptr<Impl>> values;return values;}
+    // A POD TLS pointer avoids registering a C++ TLS destructor whose code
+    // could be called after a host unloads the input-method DLL.
+    static std::vector<std::weak_ptr<Impl>>*& storage() {static thread_local std::vector<std::weak_ptr<Impl>>* values=nullptr;return values;}
+    static std::vector<std::weak_ptr<Impl>>& instances() {auto*& values=storage();if (!values) values=new std::vector<std::weak_ptr<Impl>>;return *values;}
+    static void remove(Impl* target) {
+        auto*& values=storage();if (!values) return;
+        std::erase_if(*values,[&](const auto& weak) {auto value=weak.lock();return !value || value.get()==target;});
+        if (values->empty()) {delete values;values=nullptr;}
+    }
     void hide() {if (panel_) panel_->hide();service_=nullptr;context_=nullptr;}
     commands::Output output(const tk::Effect& effect) {
         commands::Output value;value.set_id(OutputMarker);value.set_consumed(true);
@@ -100,7 +115,7 @@ public:
         return value;
     }
     bool process(TipTextService* service,ITfContext* context,bool test,bool open,commands::CompositionMode mode,bool down,WPARAM key,LPARAM lparam,const BYTE* states,BOOL* eaten) {
-        if (nativeComposition_ || (open && mode!=commands::HIRAGANA && mode!=commands::FULL_KATAKANA)) return false;
+        if (sensitive(service) || nativeComposition_ || (open && mode!=commands::HIRAGANA && mode!=commands::FULL_KATAKANA)) return false;
         if (mode!=lastPublishedMode_) session_.options.katakana=mode==commands::FULL_KATAKANA;
         session_.options.japanese=open;
         const bool shortcut=(states[VK_CONTROL]&0x80) || (states[VK_MENU]&0x80) || (states[VK_LWIN]&0x80) || (states[VK_RWIN]&0x80);
@@ -127,7 +142,7 @@ public:
     }
     bool candidate(TipTextService* service,ITfContext* context,int id,bool submit) {
         if (id<CandidateStart || id>=CandidateEnd) return false;
-        if (!focused(service,context) || TipStatus::IsDisabledContext(context)) return true;
+        if (sensitive(service) || !focused(service,context) || TipStatus::IsDisabledContext(context)) return true;
         const auto index=id-candidateBase_;
         if (index<0 || index>=static_cast<int>(session_.candidates.size())) return true;
         const auto effect=submit ? session_.choose(static_cast<size_t>(index)):session_.highlight(static_cast<size_t>(index));
@@ -139,7 +154,7 @@ public:
         RegGetValueW(HKEY_CURRENT_USER,L"Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",L"AppsUseLightTheme",RRF_RT_REG_DWORD,nullptr,&light,&size);return !light;
     }
     bool render(TipTextService* service,ITfContext* context,const commands::RendererCommand& command) {
-        if (TipStatus::IsDisabledContext(context)) {hide();return true;}
+        if (sensitive(service) || TipStatus::IsDisabledContext(context)) {hide();return true;}
         if (command.output().id()!=OutputMarker) {
             if (session_.active()) session_.clear(false);nativeComposition_=command.output().has_preedit();hide();return false;
         }
@@ -192,22 +207,40 @@ public:
     bool nativeComposition_=false;
     commands::CompositionMode lastPublishedMode_=commands::HIRAGANA;
 };
-TailKanaWindows::TailKanaWindows(client::ClientInterface* client) : impl_(std::make_shared<Impl>(client)) {impl_->initialize();}
-TailKanaWindows::~TailKanaWindows() {impl_->hide();}
+TailKanaWindows::TailKanaWindows(client::ClientInterface* client) : impl_(new Impl(client),[lifetime=wil::com_ptr_nothrow<IUnknown>{new ModuleLifetime}](Impl* value) {(void)lifetime;delete value;}) {impl_->initialize();}
+TailKanaWindows::~TailKanaWindows() {impl_->hide();Impl::remove(impl_.get());}
 bool TailKanaWindows::ProcessKey(TipTextService* service,ITfContext* context,bool test,bool open,commands::CompositionMode mode,bool down,WPARAM key,LPARAM lparam,const BYTE* states,BOOL* eaten) {return impl_->process(service,context,test,open,mode,down,key,lparam,states,eaten);}
 bool TailKanaWindows::Finish(TipTextService* service,ITfContext* context,bool cancel) {return impl_->finish(service,context,cancel);}
 bool TailKanaWindows::CandidateAction(TipTextService* service,ITfContext* context,int candidate,bool submit) {return impl_->candidate(service,context,candidate,submit);}
 bool TailKanaWindows::Render(TipTextService* service,ITfContext* context,const commands::RendererCommand& command) {return impl_->render(service,context,command);}
 void TailKanaWindows::HideAll() {
-    auto& instances=Impl::instances();for (auto& weak:instances) if (auto instance=weak.lock()) instance->hide();
+    if (!Impl::storage()) return;
+    auto& instances=*Impl::storage();for (auto& weak:instances) if (auto instance=weak.lock()) instance->hide();
     std::erase_if(instances,[](const auto& weak) {return weak.expired();});
 }
 }
 
 namespace mozc::win32::tsf {
+class DefaultModeSession final : public TipComImplements<ITfEditSession> {
+public:
+    DefaultModeSession(TipTextService* service,ITfContext* context) : service_(service),context_(context) {}
+    STDMETHODIMP DoEditSession(TfEditCookie cookie) override {
+        std::vector<InputScope> scopes;
+        if (!focused(service_.get(),context_.get(),false) || TipStatus::IsDisabledContext(context_.get()) || FAILED(TipRangeUtil::GetInputScopes(context_.get(),cookie,&scopes))) return S_OK;
+        // Respect application-specific scopes, including password/PIN fields.
+        if (std::any_of(scopes.begin(),scopes.end(),[](InputScope scope) {return scope!=IS_DEFAULT;})) return S_OK;
+        TipEditSession::SwitchInputModeAsync(service_.get(),setting(L"DefaultJapanese",1) ? commands::HIRAGANA:commands::DIRECT);
+        return S_OK;
+    }
+private:
+    wil::com_ptr_nothrow<TipTextService> service_;
+    wil::com_ptr_nothrow<ITfContext> context_;
+};
 void TailKanaWindows::ApplyDefaultMode(TipTextService* service) {
+    if (!service || !service->GetThreadManager()) return;
     wil::com_ptr_nothrow<ITfDocumentMgr> document;wil::com_ptr_nothrow<ITfContext> context;
     if (FAILED(service->GetThreadManager()->GetFocus(&document)) || !document || FAILED(document->GetTop(&context)) || !context || TipStatus::IsDisabledContext(context.get())) return;
-    TipEditSession::SwitchInputModeAsync(service,setting(L"DefaultJapanese",1) ? commands::HIRAGANA:commands::DIRECT);
+    wil::com_ptr_nothrow<ITfEditSession> edit{new DefaultModeSession(service,context.get())};HRESULT result=S_OK;
+    context->RequestEditSession(service->GetClientID(),edit.get(),TF_ES_ASYNCDONTCARE|TF_ES_READ,&result);
 }
 }

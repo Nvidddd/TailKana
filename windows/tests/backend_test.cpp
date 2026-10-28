@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "win32/tip/mozc_converter.h"
 #include "base/init_mozc.h"
+#include "win32/tip/tip_input_mode_manager.h"
+#include <array>
+#include <msctf.h>
 #include <algorithm>
 #include <chrono>
 #include <iostream>
@@ -9,6 +12,13 @@ using namespace tailkana::windows;
 void check(bool value,const char* message) {if (!value) {std::cerr<<message<<'\n';std::exit(1);}}
 int main(int argc,char** argv) {
     mozc::InitMozc(argv[0],&argc,&argv);
+    mozc::win32::tsf::TipInputModeManager modes(false);
+    modes.OnInitialize(true,TF_CONVERSIONMODE_NATIVE|TF_CONVERSIONMODE_FULLSHAPE);
+    for (const auto scope:{IS_PASSWORD,IS_NUMERIC_PASSWORD,IS_NUMERIC_PIN,IS_ALPHANUMERIC_PIN,IS_ALPHANUMERIC_PIN_SET}) {
+        modes.OnChangeInputScope(std::array<InputScope,1>{scope});
+        check(modes.TailKanaSensitiveInput() && !modes.GetEffectiveOpenClose(),"password/PIN scope bypasses Japanese composition");
+    }
+    modes.OnChangeInputScope(std::array<InputScope,1>{IS_DEFAULT});check(!modes.TailKanaSensitiveInput(),"ordinary text scope restores input");
     auto converter=mozc::win32::tsf::MakeTailKanaConverter();Conversion out;
     check(converter->query("ti",false,false,out) && out.reading=="ち","real Windows Mozc live kana");
     auto literal=std::find_if(out.words.begin(),out.words.end(),[](const Word& word) {return word.text=="ち";});

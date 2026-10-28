@@ -32,6 +32,16 @@ TailKanaWindows* TipPrivateContext::GetTailKana() {
   if (!state_->tailkana_) state_->tailkana_ = std::make_unique<TailKanaWindows>(state_->client_.get());
   return state_->tailkana_.get();
 }''')
+    patch('win32/tip/tip_input_mode_manager.h','  bool GetEffectiveOpenClose() const;','''  bool TailKanaSensitiveInput() const {
+    for (const auto scope : input_scope_) if (scope == IS_PASSWORD || scope == IS_NUMERIC_PASSWORD || scope == IS_NUMERIC_PIN || scope == IS_ALPHANUMERIC_PIN || scope == IS_ALPHANUMERIC_PIN_SET) return true;
+    return false;
+  }
+  bool GetEffectiveOpenClose() const;''')
+    patch('win32/tip/tip_input_mode_manager.cc','      case IS_PASSWORD:','''      case IS_PASSWORD:
+      case IS_NUMERIC_PASSWORD:
+      case IS_NUMERIC_PIN:
+      case IS_ALPHANUMERIC_PIN:
+      case IS_ALPHANUMERIC_PIN_SET:''')
     k = 'win32/tip/tip_keyevent_handler.cc'
     anchor = '  const KeyboardStatus keyboard_status(key_state);'
     # This exact line appears twice: Test first, Key second. Keep test callbacks
@@ -108,7 +118,7 @@ mozc_cc_library(
     target_compatible_with = ["@platforms//os:windows"],
     linkopts = ["advapi32.lib"],
     deps = [
-        ":tailkana_windows_h", ":tip_private_context_h", ":tip_text_service",
+        ":tailkana_windows_h", ":tip_private_context_h", ":tip_text_service", ":tip_dll_module", ":tip_range_util",
         ":tip_edit_session", ":tip_status", "//client", "//client:client_interface",
         "//protocol:commands_cc_proto", "//protocol:candidate_window_cc_proto",
         "//protocol:renderer_cc_proto", "//win32/tailkana:core", "//win32/tailkana:panel",
@@ -116,6 +126,13 @@ mozc_cc_library(
     ],
 )
 '''
+    impl_start=text.index('name = "tailkana_windows_impl",')
+    deps_start=text.index('deps = [',impl_start)+len('deps = [')
+    deps_end=text.index('    ],',deps_start)
+    for dependency in (':tip_dll_module',':tip_range_util',':tip_thread_context',':tip_input_mode_manager'):
+        if '"'+dependency+'"' not in text[deps_start:deps_end]:
+            text=text[:deps_start]+'\n        "'+dependency+'",'+text[deps_start:]
+            deps_end=text.index('    ],',deps_start)
     if 'name = "tailkana_converter"' not in text:
         text = text.replace('"mozc_cc_library",','"mozc_cc_library",\n    "mozc_cc_binary",',1)
         text = text.replace('name = "tailkana_windows_impl",','name = "tailkana_windows_impl",',1)
@@ -132,9 +149,13 @@ mozc_cc_library(
 mozc_cc_binary(
     name = "tailkana_backend_test", srcs = ["tailkana_backend_test.cc"],
     target_compatible_with = ["@platforms//os:windows"],
-    deps = [":tailkana_converter", "//base:init_mozc", "//win32/tailkana:core"],
+    deps = [":tailkana_converter", ":tip_input_mode_manager", "//base:init_mozc", "//win32/tailkana:core"],
 )
 '''
+    test_start=text.index('name = "tailkana_backend_test",')
+    deps_start=text.index('deps = [',test_start)+len('deps = [')
+    deps_end=text.index(']',deps_start)
+    if '":tip_input_mode_manager"' not in text[deps_start:deps_end]: text=text[:deps_start]+'":tip_input_mode_manager", '+text[deps_start:]
     pending[build] = text
     # Fixed, distinct identities are applied only to the Windows working copy.
     def cpp_guid(value):
