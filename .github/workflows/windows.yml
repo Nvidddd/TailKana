@@ -112,6 +112,7 @@ jobs:
           name: Windows-build-diagnostics
           path: |
             work/windows/install.log
+            work/windows/backend-test*.log
             work/windows/mozc/tailkana-patch-report.json
             work/windows/core-build/Testing/Temporary/LastTest.log
           if-no-files-found: ignore

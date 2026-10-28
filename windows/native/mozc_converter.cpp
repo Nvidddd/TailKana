@@ -15,7 +15,7 @@ std::string preedit(const commands::Output& output) {
 }
 class NativeConverter final : public tk::Converter {
 public:
-    explicit NativeConverter(client::ClientInterface* client = nullptr) : owned_(client ? nullptr:client::ClientFactory::NewClient()),client_(client ? client:owned_.get()) {}
+    explicit NativeConverter(client::ClientInterface* client = nullptr) : owned_(client ? nullptr:client::ClientFactory::NewClient()),client_(client ? client:owned_.get()) {client_->set_suppress_error_dialog(true);}
     bool query(const std::string& raw,bool converted,bool katakana,tk::Conversion& result) override {
         const auto mode = katakana ? commands::FULL_KATAKANA:commands::HIRAGANA;
         const bool append = !converted && !wasConverted_ && mode == mode_ && raw.size() == raw_.size()+1 && raw.starts_with(raw_);

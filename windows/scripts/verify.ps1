@@ -28,8 +28,13 @@ if ($InstallTest) {
         & $test "{$($lock.identity.textService)}" "{$($lock.identity.languageProfile)}"
         if ($LASTEXITCODE -ne 0) { throw "TSF registration/load test failed: $LASTEXITCODE" }
         $backend = Join-Path $projectRoot 'work/windows/mozc/src/bazel-bin/win32/tip/tailkana_backend_test.exe'
-        & $backend
-        if ($LASTEXITCODE -ne 0) { throw "Real Windows converter test failed: $LASTEXITCODE" }
+        $stdout = Join-Path $projectRoot 'work/windows/backend-test.log'
+        $stderr = Join-Path $projectRoot 'work/windows/backend-test.stderr.log'
+        $process = Start-Process $backend -NoNewWindow -PassThru -RedirectStandardOutput $stdout -RedirectStandardError $stderr
+        if (!$process.WaitForExit(120000)) { $process.Kill(); throw 'Real converter check exceeded two minutes' }
+        $process.WaitForExit(); $process.Refresh()
+        Get-Content $stdout
+        if ($process.ExitCode -ne 0) { Get-Content $stderr; throw "Real Windows converter test failed: $($process.ExitCode)" }
     } finally {
         if ($installed) {
             $process = Start-Process msiexec.exe -ArgumentList @('/x',"`"$package`"",'/qn','/norestart') -Wait -PassThru
