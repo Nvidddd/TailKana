@@ -225,8 +225,9 @@ class DefaultModeSession final : public TipComImplements<ITfEditSession> {
 public:
     DefaultModeSession(TipTextService* service,ITfContext* context) : service_(service),context_(context) {}
     STDMETHODIMP DoEditSession(TfEditCookie cookie) override {
-        std::vector<InputScope> scopes;
-        if (!focused(service_.get(),context_.get(),false) || TipStatus::IsDisabledContext(context_.get()) || FAILED(TipRangeUtil::GetInputScopes(context_.get(),cookie,&scopes))) return S_OK;
+        std::vector<InputScope> scopes;wil::com_ptr_nothrow<ITfRange> selection;TfActiveSelEnd end=TF_AE_NONE;
+        if (!focused(service_.get(),context_.get(),false) || TipStatus::IsDisabledContext(context_.get())) return S_OK;
+        if (FAILED(TipRangeUtil::GetDefaultSelection(context_.get(),cookie,&selection,&end)) || !selection || FAILED(TipRangeUtil::GetInputScopes(selection.get(),cookie,&scopes))) return S_OK;
         // Respect application-specific scopes, including password/PIN fields.
         if (std::any_of(scopes.begin(),scopes.end(),[](InputScope scope) {return scope!=IS_DEFAULT;})) return S_OK;
         TipEditSession::SwitchInputModeAsync(service_.get(),setting(L"DefaultJapanese",1) ? commands::HIRAGANA:commands::DIRECT);
