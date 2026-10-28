@@ -1,0 +1,95 @@
+name: Windows input method
+on:
+  push:
+    branches: [main]
+    paths: ['windows/**', 'src/roman_*', 'src/pinyin_rules.inc', 'src/typo_rules.inc', 'src/typing_policy.*', '.github/workflows/windows.yml']
+  pull_request:
+    paths: ['windows/**', 'src/roman_*', 'src/pinyin_rules.inc', 'src/typo_rules.inc', 'src/typing_policy.*', '.github/workflows/windows.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: tailkana-windows-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  x64:
+    runs-on: windows-2025
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Read pinned upstream
+        id: upstream
+        shell: pwsh
+        run: |
+          $lock = Get-Content windows/upstream.json -Raw | ConvertFrom-Json
+          "commit=$($lock.commit)" >> $env:GITHUB_OUTPUT
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: google/mozc
+          ref: ${{ steps.upstream.outputs.commit }}
+          path: work/windows/mozc
+          persist-credentials: false
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: work/windows/mozc/src/third_party_cache
+          key: tailkana-win-deps-${{ runner.arch }}-${{ steps.upstream.outputs.commit }}
+      - name: Apply pinned TSF integration
+        shell: pwsh
+        run: python windows/scripts/prepare.py
+      - name: Compile and test shared core and native candidate window
+        shell: pwsh
+        run: |
+          cmake -S windows -B work/windows/core-build -A x64
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          cmake --build work/windows/core-build --config Release --parallel 4
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          ctest --test-dir work/windows/core-build -C Release --output-on-failure
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Prepare upstream Windows SDK dependencies
+        shell: pwsh
+        working-directory: work/windows/mozc/src
+        run: |
+          python build_tools/update_deps.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Compile native TSF DLL
+        shell: pwsh
+        working-directory: work/windows/mozc/src
+        env:
+          ANDROID_NDK_HOME: ''
+        run: |
+          bazelisk build //win32/tip:mozc_tip64 --config release_build --platforms=//:windows-x86_64
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Build upstream Qt configuration tool dependency
+        shell: pwsh
+        working-directory: work/windows/mozc/src
+        run: |
+          python build_tools/build_qt.py --release --confirm_license --target_arch=x64
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Build and collect MSI installer
+        shell: pwsh
+        env:
+          ANDROID_NDK_HOME: ''
+        run: ./windows/scripts/build.ps1 -PackageOnly
+      - name: Check installer and test TSF registration on disposable runner
+        shell: pwsh
+        run: ./windows/scripts/verify.ps1 -InstallTest
+      - name: Upload Windows installer
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: TailKana-Windows-x64
+          path: outputs/windows/*
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: Windows-build-diagnostics
+          path: |
+            work/windows/install.log
+            work/windows/mozc/tailkana-patch-report.json
+            work/windows/core-build/Testing/Temporary/LastTest.log
+          if-no-files-found: ignore
+          retention-days: 7

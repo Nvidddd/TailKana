@@ -1,0 +1,16 @@
+{
+  "repository": "https://github.com/google/mozc.git",
+  "commit": "18e76511af9371a9a4409b1d13c3e30884b53e9c",
+  "version": "0.5.0-alpha.1",
+  "installerVersion": "0.5.0.1",
+  "identity": {
+    "textService": "6E8DDD2A-9AC0-501E-B618-F3F4BE5EA50E",
+    "languageProfile": "D2CA135F-5AF5-518F-8BE1-EFAB9E923267",
+    "upgradeCode": "7176363E-C726-5707-88B5-DCDCEFAFD6C6"
+  },
+  "target": "Windows 10 1809+ / Windows 11 x64",
+  "references": [
+    "https://github.com/google/mozc/blob/18e76511af9371a9a4409b1d13c3e30884b53e9c/docs/build_mozc_in_windows.md",
+    "https://learn.microsoft.com/en-us/windows/win32/tsf/text-service-registration"
+  ]
+}
