@@ -16,6 +16,7 @@ public:
     bool CandidateAction(TipTextService*,ITfContext*,int candidate,bool submit);
     bool Render(TipTextService*,ITfContext*,const commands::RendererCommand&);
     static void HideAll();
+    static void ApplyDefaultMode(TipTextService*);
 private:
     class Impl;
     std::shared_ptr<Impl> impl_;

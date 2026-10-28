@@ -27,6 +27,9 @@ if ($InstallTest) {
         $test = Join-Path $projectRoot 'work/windows/core-build/Release/tailkana-windows-registration-test.exe'
         & $test "{$($lock.identity.textService)}" "{$($lock.identity.languageProfile)}"
         if ($LASTEXITCODE -ne 0) { throw "TSF registration/load test failed: $LASTEXITCODE" }
+        $backend = Join-Path $projectRoot 'work/windows/mozc/src/bazel-bin/win32/tip/tailkana_backend_test.exe'
+        & $backend
+        if ($LASTEXITCODE -ne 0) { throw "Real Windows converter test failed: $LASTEXITCODE" }
     } finally {
         if ($installed) {
             $process = Start-Process msiexec.exe -ArgumentList @('/x',"`"$package`"",'/qn','/norestart') -Wait -PassThru

@@ -7,6 +7,8 @@ using namespace tailkana::windows;
 void check(bool value,const char* message) { if (!value) { std::cerr<<message<<'\n';std::exit(1); } }
 struct Fake final : Converter {
     std::vector<Word> words;
+    static inline int instances = 0;
+    Fake() { ++instances; }
     static inline int queries = 0;
     bool query(const std::string& raw,bool converted,bool kata,Conversion& result) override {
         ++queries;
@@ -50,5 +52,14 @@ int main() {
     check(fuzzy,"Chinese ci maps to tsu through the shared rules");
     s.clear();s.options.fuzzy = s.options.corrections = true;type(s,std::string(64,'a'));check(s.buffer.raw.size() == 64,"long input is retained");
     s.clear();s.options.fuzzy = s.options.corrections = false;type(s,"fail");check(!s.error.empty() && s.buffer.raw == "fail","converter failure retains original input");
+    check(s.handle({Key::Enter}).commit=="fail","conversion failure must not commit an older shorter reading");
+    type(s,"ti");s.handle({Key::Space});s.handle({Key::Space});s.handle({Key::Space});s.handle({Key::Space});s.handle({Key::Tab});
+    check(s.handle({Key::Character,'2'}).commit=="候補2","expanded number 2 matches row label 2 regardless of compact page");
+    type(s,"nihongo");s.handle({Key::Left});s.handle({Key::Left});s.handle({Key::Left});s.handle({Key::Left});
+    check(s.caret()==1,"Roman caret maps to kana boundary");s.clear();
+    type(s,"ti");check(s.handle({Key::Character,'.'}).commit=="ち。","Japanese punctuation commits current reading with full-width mark");
+    Fake::instances=0;auto pool=make();pool.options.corrections=pool.options.fuzzy=true;
+    for (const auto* raw:{"arigatpu","qikatetsu","qixiki","liroku"}) {type(pool,raw);pool.clear();}
+    check(Fake::instances<=5,"at most one primary plus four reusable correction sessions");
     std::cout<<"PASS Windows session: live kana, repeated conversion, visible numbering, wheel, modes, expansion, fuzzy rules, long input and failure recovery\n";
 }

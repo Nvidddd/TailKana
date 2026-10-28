@@ -16,7 +16,7 @@ bool Session::refresh() {
     if (!active()) { reading.clear();preedit.clear();primary_->reset();return true; }
     Conversion result;
     if (!primary_->query(buffer.raw, converted, script(), result)) {
-        error = "日文词典暂不可用";preedit = buffer.raw;return false;
+        error = "日文词典暂不可用";reading = preedit = buffer.raw;return false;
     }
     reading = result.reading;preedit = reading;
     for (size_t i = 0; i < result.words.size(); ++i) candidates.push_back({result.words[i],0,{},primary_,i});
@@ -103,6 +103,7 @@ Effect Session::handle(const Stroke& s) {
         }
         if (s.character >= '1' && s.character <= '3') {
             const auto indices = visible();const size_t slot = s.character-'1';
+            if (expanded) return choose(slot);
             return slot < indices.size() ? choose(indices[slot]):Effect{true,false,{}};
         }
         buffer.insert(s.character);converted = false;return changed();

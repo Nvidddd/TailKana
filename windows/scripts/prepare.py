@@ -62,6 +62,7 @@ void UpdateCommand(TipTextService* text_service, ITfContext* context,''')
     # Two-space indentation identifies the synchronous updater, without changing
     # the empty-document hide path (which must never dereference a null context).
     patch(ui,'    Win32RendererClient::OnUpdated(command);\n  }\n  return true;','    DeliverTailKana(text_service,context,command);\n  }\n  return true;')
+    patch(ui,'  OnFocusChange(text_service, document.get());\n}', '  OnFocusChange(text_service, document.get());\n  TailKanaWindows::ApplyDefaultMode(text_service);\n}')
     patch(ui,'void TipUiHandlerConventional::OnDeactivate() {','void TipUiHandlerConventional::OnDeactivate() {\n  TailKanaWindows::HideAll();')
     patch(ui,'    TipTextService* text_service, ITfDocumentMgr* focused_document_manager) {','    TipTextService* text_service, ITfDocumentMgr* focused_document_manager) {\n  TailKanaWindows::HideAll();')
     es = 'win32/tip/tip_edit_session.cc'
@@ -115,6 +116,25 @@ mozc_cc_library(
     ],
 )
 '''
+    if 'name = "tailkana_converter"' not in text:
+        text = text.replace('"mozc_cc_library",','"mozc_cc_library",\n    "mozc_cc_binary",',1)
+        text = text.replace('name = "tailkana_windows_impl",','name = "tailkana_windows_impl",',1)
+        start = text.index('name = "tailkana_windows_impl",')
+        position = text.index('deps = [',start)+len('deps = [')
+        text = text[:position]+'\n        ":tailkana_converter",'+text[position:]
+        text += '''
+mozc_cc_library(
+    name = "tailkana_converter",
+    srcs = ["mozc_converter.cc"], hdrs = ["mozc_converter.h"],
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = ["//client", "//client:client_interface", "//protocol:commands_cc_proto", "//protocol:candidate_window_cc_proto", "//win32/tailkana:core"],
+)
+mozc_cc_binary(
+    name = "tailkana_backend_test", srcs = ["tailkana_backend_test.cc"],
+    target_compatible_with = ["@platforms//os:windows"],
+    deps = [":tailkana_converter", "//base:init_mozc", "//win32/tailkana:core"],
+)
+'''
     pending[build] = text
     # Fixed, distinct identities are applied only to the Windows working copy.
     def cpp_guid(value):
@@ -148,7 +168,7 @@ mozc_cc_library(
         shutil.copy2(ROOT/'src'/name,copied/name.replace('.cpp','.cc'))
     for name in ('session.h','session.cpp'): shutil.copy2(ROOT/'windows/core'/name,copied/name.replace('.cpp','.cc'))
     for name in ('panel.h','panel.cpp'): shutil.copy2(ROOT/'windows/native'/name,copied/name.replace('.cpp','.cc'))
-    for name in ('tailkana_windows.h','tailkana_windows.cpp'): shutil.copy2(ROOT/'windows/native'/name,base/'win32/tip'/name.replace('.cpp','.cc'))
+    for name in ('tailkana_windows.h','tailkana_windows.cpp','mozc_converter.h','mozc_converter.cpp'): shutil.copy2(ROOT/'windows/native'/name,base/'win32/tip'/name.replace('.cpp','.cc'))
     (copied/'BUILD.bazel').write_text('''load("//:build_defs.bzl", "mozc_cc_library")
 load("//bazel/win32:build_defs.bzl", "features_gdi")
 package(default_visibility = ["//win32/tip:__pkg__"])
@@ -163,6 +183,7 @@ mozc_cc_library(
     deps = [":core", "//bazel/win32:user32", "//bazel/win32:gdi32"],
 )
 ''',encoding='utf-8')
+    shutil.copy2(ROOT/'windows/tests/backend_test.cpp',base/'win32/tip/tailkana_backend_test.cc')
     png = (ROOT/'assets/tailkana-preview.png').read_bytes()
     icon = struct.pack('<HHH',0,1,1)+struct.pack('<BBBBHHII',0,0,0,0,1,32,len(png),22)+png
     for name in ('product_icon.ico','product_icon_langbar.ico'): (base/'data/images/win'/name).write_bytes(icon)

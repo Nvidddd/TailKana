@@ -11,7 +11,7 @@
 #include <string>
 #include <vector>
 #include <wil/com.h>
-#include "client/client.h"
+#include "win32/tip/mozc_converter.h"
 #include "protocol/candidate_window.pb.h"
 #include "win32/tailkana/panel.h"
 #include "win32/tailkana/session.h"
@@ -27,83 +27,6 @@ constexpr int CandidateStart = 500000000;
 constexpr int CandidateEnd = CandidateStart+4096*100000;
 std::atomic<uint32_t> candidateSequence{0};
 size_t chars(const std::string& text) { return std::count_if(text.begin(),text.end(),[](unsigned char c) { return (c&0xc0)!=0x80; }); }
-std::string preedit(const commands::Output& output) {
-    std::string text;if (output.has_preedit()) for (const auto& part:output.preedit().segment()) text += part.value();return text;
-}
-class NativeConverter final : public tk::Converter {
-public:
-    explicit NativeConverter(client::ClientInterface* client = nullptr) : owned_(client ? nullptr:client::ClientFactory::NewClient()),client_(client ? client:owned_.get()) {}
-    bool query(const std::string& raw,bool converted,bool katakana,tk::Conversion& result) override {
-        const auto mode = katakana ? commands::FULL_KATAKANA:commands::HIRAGANA;
-        const bool append = !converted && !wasConverted_ && mode == mode_ && raw.size() == raw_.size()+1 && raw.starts_with(raw_);
-        mode_ = mode;
-        if (append) { if (!key(raw.back(),false)) return fail(); }
-        else {
-            reset();mode_ = mode;
-            commands::SessionCommand change;change.set_type(commands::SessionCommand::TURN_ON_IME);change.set_composition_mode(mode_);
-            if (!client_->SendCommand(change,&output_)) return fail();
-            for (size_t i=0;i<raw.size();++i) if (!key(raw[i],converted || i+1<raw.size())) return fail();
-        }
-        const auto reading = preedit(output_);
-        if (converted && !raw.empty() && !key(' ',false)) return fail();
-        raw_ = raw;wasConverted_ = converted;words_.clear();ids_.clear();
-        result.reading = reading;
-        std::set<std::string> seen;
-        int focus = 0;std::vector<std::string> values;
-        if (output_.has_preedit()) for (const auto& segment:output_.preedit().segment()) {
-            if (segment.annotation() == commands::Preedit::Segment::HIGHLIGHT) focus = static_cast<int>(values.size());
-            values.push_back(segment.value());
-        }
-        if (output_.has_all_candidate_words()) for (const auto& word:output_.all_candidate_words().candidates()) {
-            std::string text;
-            if (converted) for (int i=0;i<focus;++i) text += values[i];
-            text += word.value();
-            if (converted) for (size_t i=focus+std::max(1,word.num_segments_in_candidate());i<values.size();++i) text += values[i];
-            if (seen.insert(text).second) { words_.push_back({text,word.key().empty() ? reading:word.key(),word.id()});ids_.push_back(word.id()); }
-        }
-        if (!reading.empty() && seen.insert(reading).second) { words_.push_back({reading,reading,INT_MIN});ids_.push_back(INT_MIN); }
-        result.words = words_;return true;
-    }
-    std::string highlight(size_t index) override {
-        if (index >= ids_.size()) return {};
-        if (ids_[index] == INT_MIN) return words_[index].text;
-        commands::SessionCommand command;command.set_type(commands::SessionCommand::HIGHLIGHT_CANDIDATE);command.set_id(ids_[index]);
-        if (!client_->SendCommand(command,&output_)) return {};
-        wasConverted_ = true;
-        const auto value = preedit(output_);return value.empty() ? words_[index].text:value;
-    }
-    std::string commit(size_t index) override {
-        if (index >= ids_.size()) return {};
-        if (ids_[index] == INT_MIN) { const auto text = words_[index].text;reset();return text; }
-        commands::SessionCommand command;command.set_type(commands::SessionCommand::SELECT_CANDIDATE);command.set_id(ids_[index]);
-        if (!client_->SendCommand(command,&output_)) return {};
-        std::string text = output_.has_result() ? output_.result().value():"";
-        if (output_.has_preedit()) {
-            command.set_type(commands::SessionCommand::SUBMIT);
-            if (!client_->SendCommand(command,&output_)) return {};
-            if (output_.has_result()) text += output_.result().value();
-        }
-        raw_.clear();return text;
-    }
-    void reset() override {
-        commands::SessionCommand command;command.set_type(commands::SessionCommand::RESET_CONTEXT);client_->SendCommand(command,&output_);raw_.clear();wasConverted_ = false;
-    }
-private:
-    bool fail() { raw_.clear();wasConverted_ = true;return false; }
-    bool key(char value,bool suppress) {
-        commands::KeyEvent event;event.set_mode(mode_);event.set_activated(true);
-        if (value == ' ') event.set_special_key(commands::KeyEvent::SPACE);else event.set_key_code(static_cast<unsigned char>(value));
-        commands::Context context;context.set_suppress_suggestion(suppress);return client_->SendKeyWithContext(event,context,&output_);
-    }
-    std::unique_ptr<client::ClientInterface> owned_;
-    client::ClientInterface* client_;
-    commands::Output output_;
-    commands::CompositionMode mode_ = commands::HIRAGANA;
-    bool wasConverted_ = true;
-    std::string raw_;
-    std::vector<tk::Word> words_;
-    std::vector<int> ids_;
-};
 std::optional<tk::Stroke> stroke(WPARAM key,LPARAM lparam,const BYTE* states,bool down) {
     using K = tk::Key;
     tk::Stroke result{K::Character};result.release = !down;
@@ -126,6 +49,11 @@ std::optional<tk::Stroke> stroke(WPARAM key,LPARAM lparam,const BYTE* states,boo
     }
     return result;
 }
+bool focused(TipTextService* service,ITfContext* context) {
+    BOOL active=FALSE;if (FAILED(service->GetThreadManager()->IsThreadFocus(&active)) || !active) return false;
+    wil::com_ptr_nothrow<ITfDocumentMgr> current,owner;
+    return SUCCEEDED(service->GetThreadManager()->GetFocus(&current)) && current && SUCCEEDED(context->GetDocumentMgr(&owner)) && current.get()==owner.get();
+}
 constexpr wchar_t SettingsKey[] = L"Software\\TailKana\\TailKana\\Panel";
 DWORD setting(const wchar_t* name,DWORD fallback) {
     DWORD value=0,size=sizeof(value);if (RegGetValueW(HKEY_CURRENT_USER,SettingsKey,name,RRF_RT_REG_DWORD,nullptr,&value,&size)!=ERROR_SUCCESS) return fallback;return value;
@@ -136,7 +64,7 @@ void save(const wchar_t* name,DWORD value) {
 }
 class TailKanaWindows::Impl : public std::enable_shared_from_this<Impl> {
 public:
-    explicit Impl(client::ClientInterface* client) : session_([client,first=true]() mutable -> std::shared_ptr<tk::Converter> { auto converter = std::make_shared<NativeConverter>(first ? client:nullptr);first = false;return converter; }) {
+    explicit Impl(client::ClientInterface* client) : session_([client,first=true]() mutable -> std::shared_ptr<tk::Converter> { auto converter = MakeTailKanaConverter(first ? client:nullptr);first = false;return converter; }) {
         auto& options=session_.options;
         options.width=std::clamp<int>(setting(L"Width",520),360,1000);options.katakana=setting(L"Katakana",0)!=0;options.corrections=setting(L"Corrections",1)!=0;options.fuzzy=setting(L"Fuzzy",1)!=0;
         options.fuzzyGroups=setting(L"FuzzyGroups",255)&255;options.furigana=setting(L"Furigana",1)!=0;options.swapKeys=setting(L"SwapKeys",0)!=0;options.showKana=setting(L"ShowKana",1)!=0;
@@ -199,6 +127,7 @@ public:
     }
     bool candidate(TipTextService* service,ITfContext* context,int id,bool submit) {
         if (id<CandidateStart || id>=CandidateEnd) return false;
+        if (!focused(service,context) || TipStatus::IsDisabledContext(context)) return true;
         const auto index=id-candidateBase_;
         if (index<0 || index>=static_cast<int>(session_.candidates.size())) return true;
         const auto effect=submit ? session_.choose(static_cast<size_t>(index)):session_.highlight(static_cast<size_t>(index));
@@ -236,13 +165,14 @@ public:
             item(10,L"主题：跟随系统",theme_==0);item(11,L"主题：浅色",theme_==1);item(12,L"主题：深色",theme_==2);
             HMENU widths=CreatePopupMenu();const int values[]{360,520,720,1000};for (int i=0;i<4;++i) AppendMenuW(widths,MF_STRING|(options.width==values[i] ? MF_CHECKED:0),20+i,std::to_wstring(values[i]).c_str());
             AppendMenuW(menu,MF_POPUP,reinterpret_cast<UINT_PTR>(widths),L"候选框宽度");
+            item(30,L"默认日文输入",setting(L"DefaultJapanese",1)!=0);item(31,L"默认英文直输",setting(L"DefaultJapanese",1)==0);
             POINT point{};GetCursorPos(&point);const UINT choice=TrackPopupMenuEx(menu,TPM_RETURNCMD|TPM_NONOTIFY|TPM_RIGHTBUTTON,point.x,point.y,panel_->window(),nullptr);DestroyMenu(menu);
             if (!service_ || !context_ || choice==0) return;
             if (choice==1 || choice==2) {if (options.japanese!=(choice==1)) id=-6;else return;}
             else if (choice==3) id=-2;else if (choice==4) id=-7;else if (choice==5) id=-3;
             else {
                 if (choice==6) options.corrections=!options.corrections;else if (choice==7) options.fuzzy=!options.fuzzy;else if (choice==8) options.furigana=!options.furigana;
-                else if (choice>=10 && choice<=12) theme_=choice-10;else if (choice>=20 && choice<=23) options.width=values[choice-20];
+                else if (choice>=10 && choice<=12) theme_=choice-10;else if (choice>=20 && choice<=23) options.width=values[choice-20];else if (choice==30 || choice==31) save(L"DefaultJapanese",choice==30);
                 session_.refresh();persist();TipEditSession::OnOutputReceivedAsync(service.get(),context.get(),output({true,true,{}}));return;
             }
         }
@@ -271,5 +201,13 @@ bool TailKanaWindows::Render(TipTextService* service,ITfContext* context,const c
 void TailKanaWindows::HideAll() {
     auto& instances=Impl::instances();for (auto& weak:instances) if (auto instance=weak.lock()) instance->hide();
     std::erase_if(instances,[](const auto& weak) {return weak.expired();});
+}
+}
+
+namespace mozc::win32::tsf {
+void TailKanaWindows::ApplyDefaultMode(TipTextService* service) {
+    wil::com_ptr_nothrow<ITfDocumentMgr> document;wil::com_ptr_nothrow<ITfContext> context;
+    if (FAILED(service->GetThreadManager()->GetFocus(&document)) || !document || FAILED(document->GetTop(&context)) || !context || TipStatus::IsDisabledContext(context.get())) return;
+    TipEditSession::SwitchInputModeAsync(service,setting(L"DefaultJapanese",1) ? commands::HIRAGANA:commands::DIRECT);
 }
 }

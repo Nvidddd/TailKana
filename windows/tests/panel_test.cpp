@@ -5,7 +5,9 @@
 using namespace tailkana::windows;
 void check(bool value,const char* message) { if (!value) { std::cerr<<message<<'\n';std::exit(1); } }
 struct Fake final : Converter {
-    bool query(const std::string&,bool,bool,Conversion& out) override {out={"ち",{{"血","ち",0},{"ち","ち",1},{"地","ち",2}}};return true;}
+    static inline bool longText=false;
+    static std::string longWord() {std::string text;for (int i=0;i<20;++i) text += "日本語";return text;}
+    bool query(const std::string&,bool,bool,Conversion& out) override {out={"ち",{{longText ? longWord():"血","ち",0},{"ち","ち",1},{"地","ち",2}}};return true;}
     std::string highlight(size_t) override {return "血";}
     std::string commit(size_t) override {return "血";}
     void reset() override {}
@@ -24,6 +26,12 @@ int main() {
         SendMessageW(window,WM_LBUTTONDOWN,MK_LBUTTON,click);SendMessageW(window,WM_LBUTTONUP,0,click);check(calls==1,"fresh click works");
         SendMessageW(window,WM_LBUTTONDOWN,MK_LBUTTON,click);session.handle({Key::Character,'a'});panel.update(session,{120,120,130,145});UpdateWindow(window);
         SendMessageW(window,WM_LBUTTONUP,0,click);check(calls==1,"stale click cannot commit a new candidate");
+        RECT compact{};GetClientRect(window,&compact);
+        Fake::longText=true;session.refresh();panel.update(session,{120,120,130,145});UpdateWindow(window);
+        check(session.expanded && session.autoExpanded,"long candidate automatically expands");
+        RECT area{};GetClientRect(window,&area);check(area.bottom>compact.bottom*2,"long Japanese rows wrap at full size instead of clipping to one line");
+        Fake::longText=false;session.refresh();panel.update(session,{120,120,130,145});
+        check(!session.expanded,"short candidates automatically recover compact view");
         panel.hide();check(!IsWindowVisible(window),"hide clears candidate window");
     }
     check(!IsWindow(window),"destruction removes native candidate window");

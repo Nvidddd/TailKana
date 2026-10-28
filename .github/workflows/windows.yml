@@ -42,6 +42,11 @@ jobs:
           path: work/windows/bazel-cache
           key: tailkana-win-bazel-${{ runner.arch }}-${{ steps.upstream.outputs.commit }}-${{ github.sha }}
           restore-keys: tailkana-win-bazel-${{ runner.arch }}-${{ steps.upstream.outputs.commit }}-
+      - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        id: qt-cache
+        with:
+          path: work/windows/mozc/src/third_party/qt
+          key: tailkana-win-qt-${{ runner.arch }}-${{ steps.upstream.outputs.commit }}
       - name: Apply pinned TSF integration
         shell: pwsh
         run: python windows/scripts/prepare.py
@@ -74,11 +79,17 @@ jobs:
           bazelisk build //win32/tip:mozc_tip64 --config release_build --platforms=//:windows-x86_64 --disk_cache=${{ github.workspace }}/work/windows/bazel-cache
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Build upstream Qt configuration tool dependency
+        if: steps.qt-cache.outputs.cache-hit != 'true'
         shell: pwsh
         working-directory: work/windows/mozc/src
         run: |
           python build_tools/build_qt.py --release --confirm_license --target_arch=x64
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        if: steps.qt-cache.outputs.cache-hit != 'true'
+        with:
+          path: work/windows/mozc/src/third_party/qt
+          key: tailkana-win-qt-${{ runner.arch }}-${{ steps.upstream.outputs.commit }}
       - name: Build and collect MSI installer
         shell: pwsh
         env:

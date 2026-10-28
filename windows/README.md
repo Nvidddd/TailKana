@@ -11,7 +11,7 @@ Windows 版使用 Mozc 的原生 TSF 输入法框架、客户端／转换服务�
 - 右 Shift＋方向键或鼠标十字轮盘修改最后音节；`ti→tyo` 后重新生成轮盘。
 - Shift＋Tab 在日文与英文间切换，左 Shift 暂时切换平／片假名；按钮可切换罗马字／假名显示和空格／Enter 对调。
 - 复用 macOS 的有界键盘纠错和模糊拼音规则，以 E／B 标记；每键最多四次纠错查询、两条新增结果。
-- 墨绿浅色／深色／跟随系统、框宽和基本选项在候选窗齿轮菜单调整，保存在当前用户的 `HKCU\Software\TailKana\TailKana\Panel`。
+- 墨绿浅色／深色／跟随系统、默认日文／英文、框宽和基本选项在候选窗齿轮菜单调整，保存在当前用户的 `HKCU\Software\TailKana\TailKana\Panel`。
 - 普通续打按增量发送一键；重建或纠错时仅为最终输入生成预测，跳过中间前缀。客户端会话复用，避免反复创建纠错会话。
 
 当前是开发移植，**不能把共享核心测试通过当成 Windows 系统输入已经验证**。Windows DLL 编译、MSI 安装／卸载、TSF 注册及真实应用输入仍须逐项验收，进度以 GitHub Actions 的实际结果为准。
@@ -35,7 +35,7 @@ Windows 版使用 Mozc 的原生 TSF 输入法框架、客户端／转换服务�
 ./windows/scripts/verify.ps1 -InstallTest
 ```
 
-此选项安装 MSI，查询 TSF 语言配置并加载 COM 输入法模块，最后卸载。它不代替记事本、浏览器、Office 等应用中的逐键输入与鼠标交互验证。
+此选项安装 MSI，查询 TSF 语言配置并加载 COM 输入法模块，再连接真实 Mozc 服务验证假名、片假名、汉字、长句提交并记录逐键耗时，最后卸载。它不代替记事本、浏览器、Office 等应用中的逐键输入与鼠标交互验证。
 
 构建产物位于 `outputs/windows/TailKana-0.5.0-alpha.1-windows-x64.msi`，SHA256 在同目录。GitHub Actions 成功后上传 Windows 安装器 artifact；它尚未经过 Windows 代码签名。
 

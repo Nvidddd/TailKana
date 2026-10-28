@@ -10,7 +10,7 @@ public:
     using Action = std::function<void(int,uint64_t)>;
     explicit Panel(Action);
     ~Panel();
-    void update(Session&,const RECT& anchor);
+    void update(Session&,const RECT& anchor,bool followSelection = true);
     void hide();
     void setDark(bool value) { dark_ = value; }
     HWND window() const { return window_; }
@@ -20,6 +20,8 @@ private:
     HWND window_ = nullptr;
     Session* session_ = nullptr;
     std::vector<Hit> hits_;
+    std::vector<int> rowHeights_;
+    RECT anchor_{};
     uint64_t revision_ = 0, pressedRevision_ = 0;
     int pressedAction_ = -9999, scroll_ = 0;
     int dpi_ = 96, width_ = 520, height_ = 100;
