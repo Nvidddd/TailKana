@@ -31,10 +31,17 @@ jobs:
           ref: ${{ steps.upstream.outputs.commit }}
           path: work/windows/mozc
           persist-credentials: false
-      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+      - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        id: dependencies-cache
         with:
           path: work/windows/mozc/src/third_party_cache
           key: tailkana-win-deps-${{ runner.arch }}-${{ steps.upstream.outputs.commit }}
+      - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        id: bazel-cache
+        with:
+          path: work/windows/bazel-cache
+          key: tailkana-win-bazel-${{ runner.arch }}-${{ steps.upstream.outputs.commit }}-${{ github.sha }}
+          restore-keys: tailkana-win-bazel-${{ runner.arch }}-${{ steps.upstream.outputs.commit }}-
       - name: Apply pinned TSF integration
         shell: pwsh
         run: python windows/scripts/prepare.py
@@ -53,13 +60,18 @@ jobs:
         run: |
           python build_tools/update_deps.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        if: steps.dependencies-cache.outputs.cache-hit != 'true'
+        with:
+          path: work/windows/mozc/src/third_party_cache
+          key: tailkana-win-deps-${{ runner.arch }}-${{ steps.upstream.outputs.commit }}
       - name: Compile native TSF DLL
         shell: pwsh
         working-directory: work/windows/mozc/src
         env:
           ANDROID_NDK_HOME: ''
         run: |
-          bazelisk build //win32/tip:mozc_tip64 --config release_build --platforms=//:windows-x86_64
+          bazelisk build //win32/tip:mozc_tip64 --config release_build --platforms=//:windows-x86_64 --disk_cache=${{ github.workspace }}/work/windows/bazel-cache
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Build upstream Qt configuration tool dependency
         shell: pwsh
@@ -93,3 +105,9 @@ jobs:
             work/windows/core-build/Testing/Temporary/LastTest.log
           if-no-files-found: ignore
           retention-days: 7
+      - name: Preserve successful compiler actions even after a later failure
+        if: always()
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: work/windows/bazel-cache
+          key: tailkana-win-bazel-${{ runner.arch }}-${{ steps.upstream.outputs.commit }}-${{ github.sha }}

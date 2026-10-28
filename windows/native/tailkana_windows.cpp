@@ -225,8 +225,8 @@ public:
     }
     void action(int id,uint64_t revision) {
         if (!service_ || !context_ || revision!=session_.revision()) return;
-        wil::com_ptr_nothrow<TipTextService> service;service.copy_from(service_);
-        wil::com_ptr_nothrow<ITfContext> context;context.copy_from(context_);
+        wil::com_ptr_nothrow<TipTextService> service{service_};
+        wil::com_ptr_nothrow<ITfContext> context{context_};
         if (id==-10) {
             HMENU menu=CreatePopupMenu();auto& options=session_.options;
             auto item=[&](UINT code,const wchar_t* title,bool checked=false) {AppendMenuW(menu,MF_STRING|(checked ? MF_CHECKED:0),code,title);};

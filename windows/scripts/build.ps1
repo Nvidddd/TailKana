@@ -25,10 +25,10 @@ try {
     try {
         if (!$PackageOnly) {
         if (!$SkipDependencies) { Run-Native python @('build_tools/update_deps.py') }
-        Run-Native bazelisk @('build','//win32/tip:mozc_tip64','--config','release_build','--platforms=//:windows-x86_64')
+        Run-Native bazelisk @('build','//win32/tip:mozc_tip64','--config','release_build','--platforms=//:windows-x86_64',"--disk_cache=$projectRoot/work/windows/bazel-cache")
         if (!$SkipQt) { Run-Native python @('build_tools/build_qt.py','--release','--confirm_license','--target_arch=x64') }
         }
-        Run-Native bazelisk @('build','package','--config','release_build','--platforms=//:windows-x86_64')
+        Run-Native bazelisk @('build','package','--config','release_build','--platforms=//:windows-x86_64',"--disk_cache=$projectRoot/work/windows/bazel-cache")
     } finally { Pop-Location }
     $output = Join-Path $projectRoot 'outputs/windows'
     New-Item -ItemType Directory -Force $output | Out-Null
